@@ -1,0 +1,34 @@
+stages:
+  - build
+  - registry
+  - compile
+  - deploy
+
+services:
+  - docker:dind
+
+registry:
+  stage: registry
+  image: docker:latest
+  before_script:
+    - export DOCKER_HOST=$DOCKER_PORT
+    - docker info
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN git.dataon.com:4567
+    - docker build -t git.dataon.com:4567/opensource/julian-public-docker:$CI_COMMIT_REF_SLUG -f "alpine-node-openjdk-android-cordova\Dockerfile" .
+    - docker push git.dataon.com:4567/opensource/julian-public-docker:$CI_COMMIT_REF_SLUG
+  environment:
+    name: production
+  tags:
+    - registry
+  only:
+    - /^release/.*$/
+    - /^hotfix/.*$/
+    - triggers
+    - schedules
+    - develop
+    - master
+  except:
+    variables:
+      - $API
+  retry: 2
