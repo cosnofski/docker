@@ -51,40 +51,50 @@ RUN set -x \
 # https://github.com/jangrewe/gitlab-ci-android/issues/23
 # https://issuetracker.google.com/issues/66465833
 
-ENV VERSION_SDK_TOOLS=4333796 \
-	  ANDROID_HOME=/usr/local/android-sdk-linux
+ENV VERSION_SDK_TOOLS "4333796"
 
-ENV	PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+ENV ANDROID_HOME "/sdk"
+ENV PATH "$PATH:${ANDROID_HOME}/tools"
+ENV DEBIAN_FRONTEND noninteractive
 
-RUN mkdir -p $ANDROID_HOME && \
-    chown -R root.root $ANDROID_HOME && \
-    # Install dependencies
-    apk add --no-cache bash curl git openssl openssh-client ca-certificates && \
-    # Install Android SDK
-    wget -q -O sdk.zip http://dl.google.com/android/repository/sdk-tools-linux-$VERSION_SDK_TOOLS.zip && \
-    unzip sdk.zip -d $ANDROID_HOME && \
-    rm -f sdk.zip
+RUN apt-get -qq update && \
+    apt-get install -qqy --no-install-recommends \
+      bzip2 \
+      curl \
+      git-core \
+      html2text \
+      openjdk-8-jdk \
+      libc6-i386 \
+      lib32stdc++6 \
+      lib32gcc1 \
+      lib32ncurses5 \
+      lib32z1 \
+      unzip \
+      locales \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN locale-gen en_US.UTF-8
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
-    # Install and update Android packages
+RUN rm -f /etc/ssl/certs/java/cacerts; \
+    /var/lib/dpkg/info/ca-certificates-java.postinst configure
 
-ADD packages.txt $ANDROID_HOME
+RUN curl -s https://dl.google.com/android/repository/sdk-tools-linux-${VERSION_SDK_TOOLS}.zip > /sdk.zip && \
+    unzip /sdk.zip -d /sdk && \
+    rm -v /sdk.zip
 
+RUN mkdir -p $ANDROID_HOME/licenses/ \
+  && echo "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e" > $ANDROID_HOME/licenses/android-sdk-license \
+  && echo "84831b9409646a918e30573bab4c9c91346d8abd\n504667f4c0de7af1a06de9f4b1727b84351f2910" > $ANDROID_HOME/licenses/android-sdk-preview-license
+
+ADD packages.txt /sdk
 RUN mkdir -p /root/.android && \
-    touch /root/.android/repositories.cfg && \
-    sdkmanager --update && yes | sdkmanager --licenses
+  touch /root/.android/repositories.cfg && \
+  ${ANDROID_HOME}/tools/bin/sdkmanager --update 
 
-RUN sdkmanager "add-ons;addon-google_apis-google-24" --verbose
-RUN sdkmanager "add-ons;addon-google_apis-google-24" --verbose
-RUN sdkmanager "build-tools;28.0.3" --verbose
-RUN sdkmanager "extras;android;m2repository" --verbose
-RUN sdkmanager "extras;google;google_play_services" --verbose
-RUN sdkmanager "extras;google;m2repository" --verbose
-RUN sdkmanager "platform-tools" --verbose
-RUN sdkmanager "platforms;android-27" --verbose
-RUN sdkmanager "platforms;android-28" --verbose
-RUN sdkmanager "extras;google;instantapps" --verbose
-RUN sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.2" --verbose
-RUN sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2" --verbose
+RUN while read -r package; do PACKAGES="${PACKAGES}${package} "; done < /sdk/packages.txt && \
+    ${ANDROID_HOME}/tools/bin/sdkmanager ${PACKAGES}
+
+RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses
 
 ENV GRADLE_VERSION=5.0
 
