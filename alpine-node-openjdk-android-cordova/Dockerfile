@@ -112,6 +112,8 @@ ENV PATH ${PATH}:/opt/gradle/gradle-"$GRADLE_VERSION"/bin
 # Ref: https://github.com/frol/docker-alpine-glibc/blob/master/Dockerfile
 # install GNU C library (glibc)
 
+# Here we install GNU libc (aka glibc) and set C.UTF-8 locale as default.
+
 RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" && \
     ALPINE_GLIBC_PACKAGE_VERSION="2.28-r0" && \
     ALPINE_GLIBC_BASE_PACKAGE_FILENAME="glibc-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
