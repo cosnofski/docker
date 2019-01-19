@@ -96,7 +96,7 @@ RUN while read -r package; do PACKAGES="${PACKAGES}${package} "; done < /sdk/pac
 
 RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses
 
-ENV GRADLE_VERSION=5.0
+ENV GRADLE_VERSION=5.1.1
 
 # Install Gradle
 RUN apk add --no-cache wget && \
