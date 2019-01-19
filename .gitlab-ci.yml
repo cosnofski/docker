@@ -15,7 +15,8 @@ registry:
     - docker info
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN git.dataon.com:4567
-    - docker build -t git.dataon.com:4567/opensource/julian-public-docker:$CI_COMMIT_REF_SLUG -f "alpine-node-openjdk-android-cordova\Dockerfile" .
+    - cd alpine-node-openjdk-android-cordova
+    - docker build -t git.dataon.com:4567/opensource/julian-public-docker:$CI_COMMIT_REF_SLUG .
     - docker push git.dataon.com:4567/opensource/julian-public-docker:$CI_COMMIT_REF_SLUG
   environment:
     name: production
@@ -31,4 +32,3 @@ registry:
   except:
     variables:
       - $API
-  retry: 2
